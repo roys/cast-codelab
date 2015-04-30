@@ -226,7 +226,7 @@ limitations under the License.
          * You can check the cast.receiver.CastMessageBus.MessageType that a message bus processes though a call
          * to getMessageType. As well, you get the namespace of a message bus by calling getNamespace()
          */
-        window.messageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:com.google.devrel.custom');
+        window.messageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:com.example.custom');
         /**
          * The namespace urn:x-cast:com.google.devrel.custom is used to identify the protocol of showing/hiding
          * the heads up display messages (The messages defined at the beginning of the html).
@@ -240,9 +240,13 @@ limitations under the License.
 
             console.log("### CUSTOM MESSAGE: " + JSON.stringify(event));
             // show/hide messages
-            console.log(event['data']);
-            if(event['data']==='show') {
+            var data = event['data']==='show';
+            console.log(data);
+            if(data) {
                 document.getElementById('messages').style.display = 'block';
+                if(data === 'CASTFTW'){
+                    window.messageBus.send(event.senderId, '16F00BA0');
+                }
             } else {
                 document.getElementById('messages').style.display = 'none';
             }
