@@ -240,7 +240,7 @@ limitations under the License.
 
             console.log("### CUSTOM MESSAGE: " + JSON.stringify(event));
             // show/hide messages
-            var data = event['data']==='show';
+            var data = event['data'];//==='show';
             console.log(data);
             if(data) {
                 document.getElementById('messages').style.display = 'block';
