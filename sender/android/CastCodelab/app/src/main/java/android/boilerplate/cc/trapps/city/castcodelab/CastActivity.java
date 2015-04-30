@@ -1,5 +1,6 @@
 package android.boilerplate.cc.trapps.city.castcodelab;
 
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
@@ -7,9 +8,12 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.MediaRouteActionProvider;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
@@ -54,6 +58,14 @@ public class CastActivity extends ActionBarActivity {
 
         // Some step (was missing)
         mMediaRouterCallback = new MyMediaRouterCallback();
+
+        Button sendMessageButton = (Button) findViewById(R.id.button);
+        sendMessageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendCommand("CASTFTW");
+            }
+        });
     }
 
     // Step 5
@@ -132,7 +144,7 @@ public class CastActivity extends ActionBarActivity {
                 @Override
                 public void onVolumeChanged() {
                     if (mApiClient != null) {
-                        Log.d(TAG, "onVolumeChanged: " + Cast.CastApi.getVolume(mApiClient));
+//                        Log.d(TAG, "onVolumeChanged: " + Cast.CastApi.getVolume(mApiClient));
                     }
                 }
 
@@ -182,10 +194,10 @@ public class CastActivity extends ActionBarActivity {
                                 mSessionId = result.getSessionId();
                                 String applicationStatus = result.getApplicationStatus();
                                 boolean wasLaunched = result.getWasLaunched();
-
+                                mHelloWorldChannel = new HelloWorldChannel();
+                                Log.d(TAG, "wasLaunced: " + wasLaunched);
                                 // Step 18
                                 if (wasLaunched) {
-                                    sendCommand("CASTFTW");
                                 }
                             } else {
                                 teardown();
@@ -238,6 +250,7 @@ public class CastActivity extends ActionBarActivity {
 
     // Step 16
     private void sendMessage(String message) {
+        Log.d(TAG, "mApiClient: " + mApiClient + " mHelloWorldChannel: " + mHelloWorldChannel);
         if (mApiClient != null && mHelloWorldChannel != null) {
             try {
                 Cast.CastApi.sendMessage(mApiClient, mHelloWorldChannel.getNamespace(), message).setResultCallback(new ResultCallback<Status>() {
