@@ -92,7 +92,7 @@ limitations under the License.
         window.connectedCastSenders = []; // {senderId:'', channel:obj}
 
         function setHudMessage(elementId, message) {
-            document.getElementById(elementId).innerHTML = '' + JSON.stringify(message);
+            document.getElementById(elementId).innerHTML = '' + JSON.stringify(message) + '\n****\n' + document.getElementById(elementId).innerHTML;
         }
 
         // Initialize the receiver SDK before starting the app-specific logic
