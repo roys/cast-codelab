@@ -1,5 +1,6 @@
 package android.boilerplate.cc.trapps.city.castcodelab;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
@@ -9,8 +10,6 @@ import android.support.v7.media.MediaRouter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
@@ -20,6 +19,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -180,6 +182,11 @@ public class CastActivity extends ActionBarActivity {
                                 mSessionId = result.getSessionId();
                                 String applicationStatus = result.getApplicationStatus();
                                 boolean wasLaunched = result.getWasLaunched();
+
+                                // Step 18
+                                if (wasLaunched) {
+                                    sendCommand("CASTFTW");
+                                }
                             } else {
                                 teardown();
                             }
@@ -211,6 +218,7 @@ public class CastActivity extends ActionBarActivity {
 
         @Override
         public void onMessageReceived(CastDevice castDevice, String namespace, String message) {
+            // Task 1
             Log.d(TAG, "onMessageReceived: " + message);
         }
     }
@@ -225,6 +233,44 @@ public class CastActivity extends ActionBarActivity {
             } catch (IOException e) {
                 Log.e(TAG, "Exception while creating media channel ", e);
             }
+        }
+    }
+
+    // Step 16
+    private void sendMessage(String message) {
+        if (mApiClient != null && mHelloWorldChannel != null) {
+            try {
+                Cast.CastApi.sendMessage(mApiClient, mHelloWorldChannel.getNamespace(), message).setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status result) {
+                        if (!result.isSuccess()) {
+                            Log.e(TAG, "Sending message failed");
+                        } else {
+                            Log.d(TAG, "Sent message to receiver: " + result.toString());
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Exception while sending message", e);
+            }
+        } else {
+            Log.w(TAG, "No client or channel to send message to.");
+        }
+    }
+
+    // Step 17
+    private void sendCommand(String command) {
+        JSONObject json = new JSONObject();
+        JSONObject extra = new JSONObject();
+
+        try {
+            extra.put("playerId", Build.MODEL); // Player name
+            extra.put("enableSounds", true);
+            json.put("command", command); // JOIN / SHOOT / LEFT / RIGHT / SOUNDON / SOUNDOFF
+            json.put("extra", extra);
+            sendMessage(json.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "Got JSONException while trying to send message. User will not be notified.", e);
         }
     }
 
