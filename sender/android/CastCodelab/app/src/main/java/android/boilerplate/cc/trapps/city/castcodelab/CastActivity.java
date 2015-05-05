@@ -1,6 +1,5 @@
 package android.boilerplate.cc.trapps.city.castcodelab;
 
-import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
@@ -8,14 +7,12 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.MediaRouteActionProvider;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
@@ -32,6 +29,8 @@ import java.io.IOException;
 // Step 1
 public class CastActivity extends ActionBarActivity {
     private static final String TAG = CastActivity.class.getSimpleName();
+    private static final String NAMESPACE = "urn:x-cast:city.trapps.cc.invaders";
+    private static final String APPID = "37D1FF71";
 
     private MediaRouter mMediaRouter;
     private MediaRouteSelector mMediaRouteSelector;
@@ -54,7 +53,7 @@ public class CastActivity extends ActionBarActivity {
         mMediaRouter = MediaRouter.getInstance(getApplicationContext());
 
         // Step 3
-        mMediaRouteSelector = new MediaRouteSelector.Builder().addControlCategory(CastMediaControlIntent.categoryForCast("37D1FF71")).build();
+        mMediaRouteSelector = new MediaRouteSelector.Builder().addControlCategory(CastMediaControlIntent.categoryForCast(APPID)).build();
 
         // Some step (was missing)
         mMediaRouterCallback = new MyMediaRouterCallback();
@@ -63,25 +62,9 @@ public class CastActivity extends ActionBarActivity {
         sendMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendCommand("CASTFTW");
+                sendCommand("JOIN");
             }
         });
-    }
-
-    // Step 5
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
-    }
-
-    // Step 6
-    @Override
-    protected void onPause() {
-        if (isFinishing()) {
-            mMediaRouter.removeCallback(mMediaRouterCallback);
-        }
-        super.onPause();
     }
 
     // Step 7
@@ -98,6 +81,22 @@ public class CastActivity extends ActionBarActivity {
         super.onStop();
     }
 
+    // Step 6
+    @Override
+    protected void onPause() {
+        if (isFinishing()) {
+            mMediaRouter.removeCallback(mMediaRouterCallback);
+        }
+        super.onPause();
+    }
+
+    // Step 5
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -112,127 +111,7 @@ public class CastActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-
         return super.onOptionsItemSelected(item);
-    }
-
-    // Step 5
-    private class MyMediaRouterCallback extends MediaRouter.Callback {
-        @Override
-        public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo info) {
-            mSelectedDevice = CastDevice.getFromBundle(info.getExtras());
-            String routeId = info.getId();
-
-            // Step 12
-            mCastClientListener = new Cast.Listener() {
-                @Override
-                public void onApplicationStatusChanged() {
-                    if (mApiClient != null) {
-                        Log.d(TAG, "onApplicationStatusChanged: " + Cast.CastApi.getApplicationStatus(mApiClient));
-                    }
-                }
-
-                @Override
-                public void onVolumeChanged() {
-                    if (mApiClient != null) {
-//                        Log.d(TAG, "onVolumeChanged: " + Cast.CastApi.getVolume(mApiClient));
-                    }
-                }
-
-                @Override
-                public void onApplicationDisconnected(int errorCode) {
-                    teardown();
-                }
-            };
-
-            // Step 15
-            Cast.CastOptions apiOptions = Cast.CastOptions.builder(mSelectedDevice, mCastClientListener).setVerboseLoggingEnabled(true).build();
-
-            // Step 9
-            mConnectionCallbacks = new ConnectionCallbacks();
-            mConnectionFailedListener = new ConnectionFailedListener();
-            Cast.CastOptions.Builder apiOptionsBuilder = Cast.CastOptions.builder(mSelectedDevice, mCastClientListener);
-            mApiClient = new GoogleApiClient.Builder(getApplicationContext()).addApi(Cast.API, apiOptionsBuilder.build()).addConnectionCallbacks(mConnectionCallbacks).addOnConnectionFailedListener(mConnectionFailedListener).build();
-
-            // Step 10
-            if (!mApiClient.isConnected()) {
-                mApiClient.connect();
-            }
-        }
-
-        @Override
-        public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo info) {
-            teardown();
-            mSelectedDevice = null;
-        }
-    }
-
-    // Step 11 (import gms version)
-    private class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
-        @Override
-        public void onConnected(Bundle connectionHint) {
-            if (mWaitingForReconnect) {
-                mWaitingForReconnect = false;
-                reconnectChannels(connectionHint);
-            } else {
-                try {
-                    Cast.CastApi.launchApplication(mApiClient, "37D1FF71", false).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
-                        @Override
-                        public void onResult(Cast.ApplicationConnectionResult result) {
-                            Status status = result.getStatus();
-                            if (status.isSuccess()) {
-                                ApplicationMetadata applicationMetadata = result.getApplicationMetadata();
-                                mSessionId = result.getSessionId();
-                                String applicationStatus = result.getApplicationStatus();
-                                boolean wasLaunched = result.getWasLaunched();
-                                mHelloWorldChannel = new HelloWorldChannel();
-                                Log.d(TAG, "wasLaunced: " + wasLaunched);
-                                // Step 18
-                                if (wasLaunched) {
-                                }
-                            } else {
-                                teardown();
-                            }
-                        }
-                    });
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to launch application", e);
-                }
-            }
-        }
-
-        @Override
-        public void onConnectionSuspended(int cause) {
-            mWaitingForReconnect = true;
-        }
-    }
-
-    private class ConnectionFailedListener implements GoogleApiClient.OnConnectionFailedListener {
-        @Override
-        public void onConnectionFailed(ConnectionResult result) {
-            teardown();
-        }
-    }
-
-    class HelloWorldChannel implements Cast.MessageReceivedCallback {
-        public String getNamespace() {
-            return "urn:x-cast:com.example.custom";
-        }
-
-        @Override
-        public void onMessageReceived(CastDevice castDevice, String namespace, String message) {
-            // Task 1
-            Log.d(TAG, "onMessageReceived: " + message);
-        }
     }
 
     // Step 13
@@ -250,7 +129,7 @@ public class CastActivity extends ActionBarActivity {
 
     // Step 16
     private void sendMessage(String message) {
-        Log.d(TAG, "mApiClient: " + mApiClient + " mHelloWorldChannel: " + mHelloWorldChannel);
+        Log.d(TAG, "sendMessage: " + message);
         if (mApiClient != null && mHelloWorldChannel != null) {
             try {
                 Cast.CastApi.sendMessage(mApiClient, mHelloWorldChannel.getNamespace(), message).setResultCallback(new ResultCallback<Status>() {
@@ -311,5 +190,104 @@ public class CastActivity extends ActionBarActivity {
         mSelectedDevice = null;
         mWaitingForReconnect = false;
         mSessionId = null;
+    }
+
+    // Step 5
+    private class MyMediaRouterCallback extends MediaRouter.Callback {
+        @Override
+        public void onRouteSelected(MediaRouter router, MediaRouter.RouteInfo info) {
+            mSelectedDevice = CastDevice.getFromBundle(info.getExtras());
+
+            // Step 12
+            mCastClientListener = new Cast.Listener() {
+                @Override
+                public void onApplicationStatusChanged() {
+                    if (mApiClient != null) {
+                        Log.d(TAG, "onApplicationStatusChanged: " + Cast.CastApi.getApplicationStatus(mApiClient));
+                    }
+                }
+
+                @Override
+                public void onVolumeChanged() {
+                }
+
+                @Override
+                public void onApplicationDisconnected(int errorCode) {
+                    teardown();
+                }
+            };
+
+            // Step 9
+            mConnectionCallbacks = new ConnectionCallbacks();
+            mConnectionFailedListener = new ConnectionFailedListener();
+            Cast.CastOptions.Builder apiOptionsBuilder = Cast.CastOptions.builder(mSelectedDevice, mCastClientListener);
+            mApiClient = new GoogleApiClient.Builder(getApplicationContext()).addApi(Cast.API, apiOptionsBuilder.build()).addConnectionCallbacks(mConnectionCallbacks).addOnConnectionFailedListener(mConnectionFailedListener).build();
+
+            // Step 10
+            if (!mApiClient.isConnected()) {
+                mApiClient.connect();
+            }
+
+            // Step 15
+            Cast.CastOptions.builder(mSelectedDevice, mCastClientListener).setVerboseLoggingEnabled(true).build();
+        }
+
+        @Override
+        public void onRouteUnselected(MediaRouter router, MediaRouter.RouteInfo info) {
+            teardown();
+            mSelectedDevice = null;
+        }
+    }
+
+    // Step 11 (import gms version)
+    private class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
+        @Override
+        public void onConnected(Bundle connectionHint) {
+            if (mWaitingForReconnect) {
+                mWaitingForReconnect = false;
+                reconnectChannels(connectionHint);
+            } else {
+                try {
+                    Cast.CastApi.launchApplication(mApiClient, APPID, false).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+                        @Override
+                        public void onResult(Cast.ApplicationConnectionResult result) {
+                            Status status = result.getStatus();
+                            if (status.isSuccess()) {
+                                Log.d(TAG, "metaData: [" + result.getApplicationMetadata() + "], applicationStatus: [" + result.getApplicationStatus() + "], wasLaunched: [" + result.getWasLaunched() + "]");
+                                mSessionId = result.getSessionId();
+                                mHelloWorldChannel = new HelloWorldChannel();
+                            } else {
+                                teardown();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to launch application", e);
+                }
+            }
+        }
+
+        @Override
+        public void onConnectionSuspended(int cause) {
+            mWaitingForReconnect = true;
+        }
+    }
+
+    private class ConnectionFailedListener implements GoogleApiClient.OnConnectionFailedListener {
+        @Override
+        public void onConnectionFailed(ConnectionResult result) {
+            teardown();
+        }
+    }
+
+    private class HelloWorldChannel implements Cast.MessageReceivedCallback {
+        public String getNamespace() {
+            return NAMESPACE;
+        }
+
+        @Override
+        public void onMessageReceived(CastDevice castDevice, String namespace, String message) {
+            Log.d(TAG, "onMessageReceived: " + message);
+        }
     }
 }
