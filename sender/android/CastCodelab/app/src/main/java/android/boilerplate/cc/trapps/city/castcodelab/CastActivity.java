@@ -62,7 +62,7 @@ public class CastActivity extends ActionBarActivity {
         sendMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendCommand("JOIN");
+                sendCommand("Yey, it can has works!");
             }
         });
     }
@@ -151,15 +151,27 @@ public class CastActivity extends ActionBarActivity {
     }
 
     // Step 17
+//    private void sendCommand(String command) {
+//        JSONObject json = new JSONObject();
+//        JSONObject extra = new JSONObject();
+//
+//        try {
+//            extra.put("playerId", Build.MODEL); // Player name
+//            extra.put("enableSounds", true);
+//            json.put("command", command); // JOIN / SHOOT / LEFT / RIGHT / SOUNDON / SOUNDOFF
+//            json.put("extra", extra);
+//            sendMessage(json.toString());
+//        } catch (JSONException e) {
+//            Log.e(TAG, "Got JSONException while trying to send message. User will not be notified.", e);
+//        }
+//    }
+
     private void sendCommand(String command) {
         JSONObject json = new JSONObject();
-        JSONObject extra = new JSONObject();
 
         try {
-            extra.put("playerId", Build.MODEL); // Player name
-            extra.put("enableSounds", true);
-            json.put("command", command); // JOIN / SHOOT / LEFT / RIGHT / SOUNDON / SOUNDOFF
-            json.put("extra", extra);
+            json.put("nick", "MyNick");
+            json.put("message", command);
             sendMessage(json.toString());
         } catch (JSONException e) {
             Log.e(TAG, "Got JSONException while trying to send message. User will not be notified.", e);
@@ -256,6 +268,7 @@ public class CastActivity extends ActionBarActivity {
                                 Log.d(TAG, "metaData: [" + result.getApplicationMetadata() + "], applicationStatus: [" + result.getApplicationStatus() + "], wasLaunched: [" + result.getWasLaunched() + "]");
                                 mSessionId = result.getSessionId();
                                 mHelloWorldChannel = new HelloWorldChannel();
+                                reconnectChannels(null);
                             } else {
                                 teardown();
                             }
