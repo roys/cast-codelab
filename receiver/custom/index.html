@@ -3,7 +3,7 @@
 <head>
     <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
     <meta charset="UTF-8"/>
-    <title>Google Cast</title>
+    <title>GDG Bergen - Google Cast</title>
     <style type="text/css">
         body {
             background-color: #000;
@@ -14,30 +14,63 @@
     </style>
 </head>
 <body>
-<div id="debug-log"></div>
+<div id="chat-room"></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
-    var logEl = document.getElementById('debug-log')
     var log = function (text) {
         console.log(text);
-        logEl.innerHTML = logEl.innerHTML + '<br/>' + text;
     };
+
+
+    var chatEl = document.getElementById('chat-room');
+    var getTime = function () {
+        return new Date().toLocaleTimeString();
+    }
+    var say = function (nick, message) {
+        chatEl.innerHTML = chatEl.innerHTML + '<br/>[' + getTime() + '] &lt;' + nick + '&gt;  ' + message;
+    };
+    var join = function (nick) {
+        chatEl.innerHTML = chatEl.innerHTML + '<br/>[' + getTime() + '] *** ' + nick + ' has joined the casting';
+    };
+    var leave = function (nick, reason) {
+        chatEl.innerHTML = chatEl.innerHTML + '<br/>[' + getTime() + '] *** ' + nick + ' has left the casting (' + reason + ')';
+    };
+
 
     var appConfig = new cast.receiver.CastReceiverManager.Config();
     appConfig.statusText = 'Ready to rock \'n\' roll!';
-    appConfig.maxInactivity = 15;
+    appConfig.maxInactivity = 30;
+
 
     var castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
     var castMessageBus = castReceiverManager.getCastMessageBus('urn:x-cast:city.trapps.cc.codelab');
+
 
     castReceiverManager.onReady = function (event) {
         log('onReady(event.data:' + JSON.stringify(event.data) + ')');
     };
     castReceiverManager.onSenderConnected = function (event) {
         log('onSenderConnected(event.data:' + JSON.stringify(event.data) + ')');
+        join(event.senderId);
     };
     castReceiverManager.onSenderDisconnected = function (event) {
         log('onSenderDisconnected(event.data:' + JSON.stringify(event.data) + ')');
         log('reason: ' + event.reason);
+        leave(event.senderId, event.reason);
     };
     castReceiverManager.onShutdown = function (event) {
         log('onShutdown(event.data:' + JSON.stringify(event.data) + ')');
@@ -48,9 +81,20 @@
     castReceiverManager.onVisibilityChanged = function (event) {
         log('onVisibilityChanged(event.data:' + JSON.stringify(event.data) + ')');
     };
+
+
     castMessageBus.onMessage = function (event) {
         log('onMessage(senderId:' + event.senderId + ', event.data:' + JSON.stringify(event.data) + ')');
+        if (event.data != null) {
+            var data = JSON.parse(event.data);
+            if (data.message && data.nick) {
+                say(data.nick, data.message);
+                //castMessageBus.send(event.senderId, 'ECHO: ' + data.message);
+                castMessageBus.broadcast(data.nick + ': ' + data.message);
+            }
+        }
     };
+
 
     castReceiverManager.start(appConfig);
 </script>
