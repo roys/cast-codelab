@@ -15,50 +15,30 @@
 </head>
 <body>
 <div id="chat-room"></div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
     var log = function (text) {
         console.log(text);
     };
-
-
     var chatEl = document.getElementById('chat-room');
-    var getTime = function () {
+    var getTime = function(){
         return new Date().toLocaleTimeString();
     }
-    var say = function (nick, message) {
+    var say = function(nick, message){
         chatEl.innerHTML = chatEl.innerHTML + '<br/>[' + getTime() + '] &lt;' + nick + '&gt;  ' + message;
     };
-    var join = function (nick) {
+    var join = function(nick){
         chatEl.innerHTML = chatEl.innerHTML + '<br/>[' + getTime() + '] *** ' + nick + ' has joined the casting';
     };
-    var leave = function (nick, reason) {
+    var leave = function(nick, reason){
         chatEl.innerHTML = chatEl.innerHTML + '<br/>[' + getTime() + '] *** ' + nick + ' has left the casting (' + reason + ')';
     };
-
 
     var appConfig = new cast.receiver.CastReceiverManager.Config();
     appConfig.statusText = 'Ready to rock \'n\' roll!';
     appConfig.maxInactivity = 30;
 
-
     var castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
     var castMessageBus = castReceiverManager.getCastMessageBus('urn:x-cast:city.trapps.cc.codelab');
-
 
     castReceiverManager.onReady = function (event) {
         log('onReady(event.data:' + JSON.stringify(event.data) + ')');
@@ -81,20 +61,21 @@
     castReceiverManager.onVisibilityChanged = function (event) {
         log('onVisibilityChanged(event.data:' + JSON.stringify(event.data) + ')');
     };
-
-
     castMessageBus.onMessage = function (event) {
         log('onMessage(senderId:' + event.senderId + ', event.data:' + JSON.stringify(event.data) + ')');
-        if (event.data != null) {
+        if(event.data != null){
             var data = JSON.parse(event.data);
-            if (data.message && data.nick) {
-                say(data.nick, data.message);
-                //castMessageBus.send(event.senderId, 'ECHO: ' + data.message);
-                castMessageBus.broadcast(data.nick + ': ' + data.message);
+            if(data.message && data.nick){
+                if(data.message === 'GDGFTW' || data.message === 'gdgftw'){
+                    castMessageBus.send(event.senderId, 'Change your app id to 16F00BA0 and continue with the next task. ;)');
+                }else {
+                    say(data.nick, data.message);
+                    //castMessageBus.send(event.senderId, 'ECHO: ' + data.message);
+                    castMessageBus.broadcast(data.nick + ': ' + data.message);
+                }
             }
         }
     };
-
 
     castReceiverManager.start(appConfig);
 </script>

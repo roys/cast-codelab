@@ -1,0 +1,43 @@
+
+<html>
+<head>
+    <script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+    <script src="js/sender.js"></script>
+    <title>Chrome sender</title>
+</head>
+<body>
+<div style=" margin:10px; float:left; display:block; width:90%;">
+
+    <button onclick="chromeSender.launchApp()">Launch app</button>
+    <button onclick="chromeSender.stopApp()">Stop app</button>
+    <br/>
+    <input id="playerName" type="text" value="Mr. Chromium"/>
+    <button onclick="chromeSender.joinGame(getElementById('playerName').getAttribute('value'))">Join game</button>
+    <button onclick="chromeSender.leaveGame()">Leave game</button>
+    <br/>
+    <button onclick="chromeSender.clearDebugMessages()">Clear debug messages</button>
+    <br/>
+    <div id="debugmessage">
+
+    </div>
+</div>
+<script>
+    var chromeSender = new window.ChromeSender();
+    chromeSender.init();
+
+    window.addEventListener("keydown", function(e) {
+        switch (e.keyCode) {
+            case 37:
+                chromeSender.move('LEFT');
+                break;
+            case 39:
+                chromeSender.move('RIGHT');
+                break;
+            case 32:
+                chromeSender.shoot();
+                break;
+        }
+    });
+</script>
+</body>
+</html>
